@@ -6,7 +6,8 @@
             [clojure.tools.cli :refer
              [parse-opts]]
             [getnf-clj.nerd-fonts-list :as nfl]
-            [clj-fuzzy.metrics :as fm])
+            [clj-fuzzy.metrics :as fm]
+            [clj-file-zip.core :as cfz])
   (:import [java.util zip.ZipInputStream]))
 
 (defn in?
@@ -27,8 +28,15 @@
 (def nerd-fonts-repo
   "https://api.github.com/repos/ryanoasis/nerd-fonts/")
 
-(def download-location
-  (str (System/getenv "HOME") "/Downloads/"))
+(defn xdg-data-dir
+  "Creates and points to the download location for the NerdFonts"
+  [dir]
+  (let [distination (str (System/getenv "HOME")
+                         "/.local/share/"
+                         dir)]
+    (if-not (.exists (io/as-file distination))
+      (.mkdir (io/file distination)))
+    (str distination)))
 
 (defn get-release
   "gets NerdFonts release version"
@@ -42,20 +50,22 @@
 (defn download-link
   "The download link to use"
   [font]
-  (str
-   "https://github.com/ryanoasis/nerd-fonts/releases/download/"
-   (get-release)
-   "/"
-   font
-   ".zip"))
+  (as-> (get-release) release
+    (str
+     "https://github.com/ryanoasis/nerd-fonts/releases/download/"
+     release
+     "/"
+     font
+     ".zip")))
 
 (defn font-exsists?
   "Checkes if the fonts is already downloads"
   [font]
   (let [font-file (str font ".zip")]
-    (if-not (.exists (io/as-file
-                      (str download-location
-                           font-file)))
+    (if-not (.exists
+             (io/as-file (str (xdg-data-dir
+                               "NerdFonts/")
+                              font-file)))
       false
       true)))
 
@@ -66,14 +76,23 @@
   (with-open [in (io/input-stream (download-link
                                    font))
               out (io/output-stream
-                   (str download-location
+                   (str (xdg-data-dir
+                         "NerdFonts/")
                         font
                         ".zip"))]
     (io/copy in out))
   (println (str "'" font "' was downloaded")))
 
+(defn install-font
+  "Extracts the font to the apprpriate directory"
+  [font]
+  (cfz/unzip
+   (str (xdg-data-dir "NerdFonts/") font ".zip")
+   (xdg-data-dir "fonts/"))
+  (println (str font " has been installed")))
+
 (defn check-and-download-font
-  "Checkes if the font is a nerd font and if it has already been
+  "Checkqs if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
   (if (in? nfl/nerd-fonts font)
@@ -81,6 +100,41 @@
       (download-font font)
       (println (str font
                     " is already downloaded")))
+    (println
+     (str "Did you mean '"
+          (fuzzy-search nfl/nerd-fonts font)
+          "'"))))
+
+(defn check-and-install-font
+  "Checkqs if the font is a nerd font and if it has already been
+  downloaded, if not, it will download it"
+  [font]
+  (if (in? nfl/nerd-fonts font)
+    (if-not (font-exsists? font)
+      (println
+       (str
+        font
+        " is not downloaded yet, download it first with -d flag."))
+      (install-font font))
+    (println
+     (str "Did you mean '"
+          (fuzzy-search nfl/nerd-fonts font)
+          "'"))))
+
+(defn check-download-and-install-font
+  "Checkqs if the font is a nerd font and if it has already been
+  downloaded, if not, it will download it"
+  [font]
+  (if (in? nfl/nerd-fonts font)
+    (if-not (font-exsists? font)
+      (do (download-font font)
+          (install-font font))
+      (do
+        (println
+         (str
+          font
+          " is already downloaded, installing now"))
+        (install-font font)))
     (println
      (str "Did you mean '"
           (fuzzy-search nfl/nerd-fonts font)
@@ -96,11 +150,6 @@
   []
   (map #(check-and-download-font %)
        nfl/nerd-fonts-names))
-
-(defn install-font
-  "Extracts the font to the apprpriate directory"
-  [font]
-  ())
 
 (defn -main
   "I don't do a whole lot ... yet."

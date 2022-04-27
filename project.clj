@@ -9,7 +9,8 @@
                  [org.clojure/tools.cli "1.0.206"]
                  [cheshire "5.10.2"]
                  [clj-http "3.12.3"]
-                 [clj-fuzzy "0.4.1"]]
+                 [clj-fuzzy "0.4.1"]
+                 [clj-file-zip "0.1.0"]]
   :main ^:skip-aot getnf-clj.core
   :target-path "target/%s"
   :profiles
