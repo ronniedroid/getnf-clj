@@ -10,6 +10,7 @@
             [clj-file-zip.core :as cfz])
   (:import [java.util zip.ZipInputStream]))
 
+
 (defn in?
   "true if coll contains elm"
   [coll elm]
@@ -70,7 +71,7 @@
       true)))
 
 
-(defn download-font
+(defn download
   "Downloads a single font to the download location"
   [font]
   (with-open [in (io/input-stream (download-link
@@ -81,23 +82,27 @@
                         font
                         ".zip"))]
     (io/copy in out))
-  (println (str "'" font "' was downloaded")))
+  (println (str "'" font
+                "' has been downloaded to "
+                (xdg-data-dir "NerdFonts"))))
 
-(defn install-font
+(defn install
   "Extracts the font to the apprpriate directory"
   [font]
   (cfz/unzip
    (str (xdg-data-dir "NerdFonts/") font ".zip")
    (xdg-data-dir "fonts/"))
-  (println (str font " has been installed")))
+  (println (str "'" font
+                "' has been installed in "
+                (xdg-data-dir "fonts"))))
 
-(defn check-and-download-font
-  "Checkqs if the font is a nerd font and if it has already been
+(defn download-font
+  "Checks if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
   (if (in? nfl/nerd-fonts font)
     (if-not (font-exsists? font)
-      (download-font font)
+      (download font)
       (println (str font
                     " is already downloaded")))
     (println
@@ -105,7 +110,7 @@
           (fuzzy-search nfl/nerd-fonts font)
           "'"))))
 
-(defn check-and-install-font
+(defn install-font
   "Checkqs if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
@@ -115,41 +120,53 @@
        (str
         font
         " is not downloaded yet, download it first with -d flag."))
-      (install-font font))
+      (install font))
     (println
      (str "Did you mean '"
           (fuzzy-search nfl/nerd-fonts font)
           "'"))))
 
-(defn check-download-and-install-font
+(defn download-and-install-font
   "Checkqs if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
   (if (in? nfl/nerd-fonts font)
     (if-not (font-exsists? font)
-      (do (download-font font)
-          (install-font font))
+      (do (download font) (install font))
       (do
         (println
          (str
           font
           " is already downloaded, installing now"))
-        (install-font font)))
+        (install font)))
     (println
      (str "Did you mean '"
           (fuzzy-search nfl/nerd-fonts font)
           "'"))))
 
-(defn download-multiple-fonts
-  "will download as many fonts as you provide it"
-  [& args]
-  (map #(check-and-download-font %) args))
+(defn download-and-or-install-multiple-fonts
+  "will download/install as many fonts as you provide it"
+  [func & args]
+  (map #(func %) args))
 
 (defn download-all-fonts
-  "Will download all the nerd fonts for you"
+  "Will download all the nerd fonts"
   []
-  (map #(check-and-download-font %)
-       nfl/nerd-fonts-names))
+  (map #(download-font %) nfl/nerd-fonts-names)
+  (println
+   (str "All the NerdFonts were downloaded to "
+        (xdg-data-dir "NerdFonts"))))
+
+(defn download-and-install-all-fonts
+  "Will download and install all the nerd fonts"
+  []
+  (map #(download-and-install-font %)
+       nfl/nerd-fonts-names)
+  (println
+   (str "All the NerdFonts were downloaded to "
+        (xdg-data-dir "NerdFonts")
+        " and installed to " (xdg-data-dir
+                              "fonts"))))
 
 (defn -main
   "I don't do a whole lot ... yet."
