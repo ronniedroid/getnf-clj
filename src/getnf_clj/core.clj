@@ -15,7 +15,6 @@
   "true if coll contains elm"
   [coll elm]
   (->> coll
-       (map :name)
        (some #(= elm %))))
 
 (defn fuzzy-search
@@ -23,8 +22,7 @@
   [coll font]
   (->> coll
        (sort-by #(fm/dice % font))
-       (last)
-       (:name)))
+       (last)))
 
 (def nerd-fonts-repo
   "https://api.github.com/repos/ryanoasis/nerd-fonts/")
@@ -100,21 +98,22 @@
   "Checks if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
-  (if (in? nfl/nerd-fonts font)
+  (if (in? nfl/nerd-fonts-names font)
     (if-not (font-exsists? font)
       (download font)
       (println (str font
                     " is already downloaded")))
     (println
      (str "Did you mean '"
-          (fuzzy-search nfl/nerd-fonts font)
-          "'"))))
+          (:name (fuzzy-search nfl/nerd-fonts
+                               font)
+                 "'")))))
 
 (defn install-font
   "Checkqs if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
-  (if (in? nfl/nerd-fonts font)
+  (if (in? nfl/nerd-fonts-names font)
     (if-not (font-exsists? font)
       (println
        (str
@@ -123,14 +122,15 @@
       (install font))
     (println
      (str "Did you mean '"
-          (fuzzy-search nfl/nerd-fonts font)
-          "'"))))
+          (:name (fuzzy-search nfl/nerd-fonts
+                               font)
+                 "'")))))
 
 (defn download-and-install-font
   "Checkqs if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
-  (if (in? nfl/nerd-fonts font)
+  (if (in? nfl/nerd-fonts-names font)
     (if-not (font-exsists? font)
       (do (download font) (install font))
       (do
@@ -141,8 +141,9 @@
         (install font)))
     (println
      (str "Did you mean '"
-          (fuzzy-search nfl/nerd-fonts font)
-          "'"))))
+          (:name (fuzzy-search nfl/nerd-fonts
+                               font)
+                 "'")))))
 
 (defn download-and-or-install-multiple-fonts
   "will download/install as many fonts as you provide it"
