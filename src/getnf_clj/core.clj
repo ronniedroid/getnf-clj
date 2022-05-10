@@ -7,8 +7,7 @@
              [parse-opts]]
             [getnf-clj.nerd-fonts-list :as nfl]
             [clj-fuzzy.metrics :as fm]
-            [clj-file-zip.core :as cfz])
-  (:import [java.util zip.ZipInputStream]))
+            [clj-file-zip.core :as cfz]))
 
 
 (defn in?
@@ -145,10 +144,20 @@
                                font)
                  "'")))))
 
-(defn download-and-or-install-multiple-fonts
-  "will download/install as many fonts as you provide it"
-  [func & args]
-  (map #(func %) args))
+(defn download-multiple-fonts
+  "will download and install as many fonts as you provide it"
+  [args]
+  (map #(download-font %) args))
+
+(defn install-multiple-fonts
+  "will download and install as many fonts as you provide it"
+  [args]
+  (map #(install-font %) args))
+
+(defn download-and-install-multiple-fonts
+  "will download and install as many fonts as you provide it"
+  [args]
+  (map #(download-and-install-font %) args))
 
 (defn download-all-fonts
   "Will download all the nerd fonts"
@@ -169,6 +178,35 @@
         " and installed to " (xdg-data-dir
                               "fonts"))))
 
+(def cli-options
+  ;; An option with a required argument
+  [["-d" "--download"] ["-i" "--install"]
+   ["-A" "--download-all"]
+   ["-a" "--download-install-all"]
+   ["-h" "--help"]])
+
 (defn -main
-  "I don't do a whole lot ... yet."
-  [& args])
+  "parses command line arguments and runs operations."
+  [& args]
+  (let [arguments (parse-opts args cli-options)
+        options (:options arguments)
+        summary (:summary arguments)
+        fonts (:arguments arguments)]
+    (if (:help options)
+      (println summary)
+      (let [{:keys [download install download-all
+                    download-install-all]}
+            options]
+        (if (and download install)
+          (download-and-install-multiple-fonts
+           fonts)
+          (cond
+            download (download-multiple-fonts
+                      fonts)
+            install (install-multiple-fonts fonts)
+            download-all (download-all-fonts)
+            download-install-all
+            (download-and-install-all-fonts)
+            :else
+            (download-and-install-multiple-fonts
+             fonts)))))))
