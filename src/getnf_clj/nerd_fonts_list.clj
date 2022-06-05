@@ -1,4 +1,4 @@
-(ns getnf-clj.nerd-fonts-list (:gen-class))
+(ns getnf-clj.nerd-fonts-list)
 
 (def nerd-fonts
   [{:name "3270", :real-name "3270"}

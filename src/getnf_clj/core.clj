@@ -1,14 +1,14 @@
 (ns getnf-clj.core
   (:gen-class)
-  (:require [clj-http.client :as client]
-            [cheshire.core :as chesh]
+  (:require [cheshire.core :as chesh]
+            [clj-file-zip.core :as cfz]
+            [clj-fuzzy.metrics :as fm]
+            [clj-http.client :as client]
             [clojure.java.io :as io]
             [clojure.tools.cli :refer
              [parse-opts]]
-            [getnf-clj.nerd-fonts-list :as nfl]
-            [clj-fuzzy.metrics :as fm]
-            [clj-file-zip.core :as cfz]))
-
+            [getnf-clj.nerd-fonts-list :refer
+             [nerd-fonts nerd-fonts-names]]))
 
 (defn in?
   "true if coll contains elm"
@@ -67,6 +67,14 @@
       false
       true)))
 
+(defn list-fonts
+  "lists all avilable fonts"
+  []
+  (println nerd-fonts-names)
+  (->> nerd-fonts-names
+       (map #(str "-> " %))
+       (map #(println %))))
+
 
 (defn download
   "Downloads a single font to the download location"
@@ -97,22 +105,21 @@
   "Checks if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
-  (if (in? nfl/nerd-fonts-names font)
+  (if (in? nerd-fonts-names font)
     (if-not (font-exsists? font)
       (download font)
       (println (str font
                     " is already downloaded")))
     (println
      (str "Did you mean '"
-          (:name (fuzzy-search nfl/nerd-fonts
-                               font)
+          (:name (fuzzy-search nerd-fonts font)
                  "'")))))
 
 (defn install-font
   "Checkqs if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
-  (if (in? nfl/nerd-fonts-names font)
+  (if (in? nerd-fonts-names font)
     (if-not (font-exsists? font)
       (println
        (str
@@ -121,15 +128,14 @@
       (install font))
     (println
      (str "Did you mean '"
-          (:name (fuzzy-search nfl/nerd-fonts
-                               font)
+          (:name (fuzzy-search nerd-fonts font)
                  "'")))))
 
 (defn download-and-install-font
   "Checkqs if the font is a nerd font and if it has already been
   downloaded, if not, it will download it"
   [font]
-  (if (in? nfl/nerd-fonts-names font)
+  (if (in? nerd-fonts-names font)
     (if-not (font-exsists? font)
       (do (download font) (install font))
       (do
@@ -140,8 +146,7 @@
         (install font)))
     (println
      (str "Did you mean '"
-          (:name (fuzzy-search nfl/nerd-fonts
-                               font)
+          (:name (fuzzy-search nerd-fonts font)
                  "'")))))
 
 (defn download-multiple-fonts
@@ -162,7 +167,7 @@
 (defn download-all-fonts
   "Will download all the nerd fonts"
   []
-  (map #(download-font %) nfl/nerd-fonts-names)
+  (map #(download-font %) nerd-fonts-names)
   (println
    (str "All the NerdFonts were downloaded to "
         (xdg-data-dir "NerdFonts"))))
@@ -171,7 +176,7 @@
   "Will download and install all the nerd fonts"
   []
   (map #(download-and-install-font %)
-       nfl/nerd-fonts-names)
+       nerd-fonts-names)
   (println
    (str "All the NerdFonts were downloaded to "
         (xdg-data-dir "NerdFonts")
@@ -182,12 +187,14 @@
   ;; An option with a required argument
   [["-d" "--download"] ["-i" "--install"]
    ["-A" "--download-all"]
-   ["-a" "--download-install-all"]
+   ["-a" "--download-install-all"] ["-l" "--list"]
    ["-h" "--help"]])
 
 (defn -main
-  "parses command line arguments and runs operations."
+  "parses command line arguments and runs
+  operations."
   [& args]
+  (println args)
   (let [arguments (parse-opts args cli-options)
         options (:options arguments)
         summary (:summary arguments)
@@ -195,7 +202,7 @@
     (if (:help options)
       (println summary)
       (let [{:keys [download install download-all
-                    download-install-all]}
+                    download-install-all list]}
             options]
         (if (and download install)
           (download-and-install-multiple-fonts
@@ -207,6 +214,7 @@
             download-all (download-all-fonts)
             download-install-all
             (download-and-install-all-fonts)
+            list (list-fonts)
             :else
             (download-and-install-multiple-fonts
              fonts)))))))
