@@ -70,10 +70,9 @@
 (defn list-fonts
   "lists all avilable fonts"
   []
-  (println nerd-fonts-names)
   (->> nerd-fonts-names
        (map #(str "-> " %))
-       (map #(println %))))
+       (run! #(println %))))
 
 
 (defn download
@@ -152,22 +151,22 @@
 (defn download-multiple-fonts
   "will download and install as many fonts as you provide it"
   [args]
-  (map #(download-font %) args))
+  (run! #(download-font %) args))
 
 (defn install-multiple-fonts
   "will download and install as many fonts as you provide it"
   [args]
-  (map #(install-font %) args))
+  (run! #(install-font %) args))
 
 (defn download-and-install-multiple-fonts
   "will download and install as many fonts as you provide it"
   [args]
-  (map #(download-and-install-font %) args))
+  (run! #(download-and-install-font %) args))
 
 (defn download-all-fonts
   "Will download all the nerd fonts"
   []
-  (map #(download-font %) nerd-fonts-names)
+  (run! #(download-font %) nerd-fonts-names)
   (println
    (str "All the NerdFonts were downloaded to "
         (xdg-data-dir "NerdFonts"))))
@@ -175,8 +174,8 @@
 (defn download-and-install-all-fonts
   "Will download and install all the nerd fonts"
   []
-  (map #(download-and-install-font %)
-       nerd-fonts-names)
+  (run! #(download-and-install-font %)
+        nerd-fonts-names)
   (println
    (str "All the NerdFonts were downloaded to "
         (xdg-data-dir "NerdFonts")
@@ -194,7 +193,6 @@
   "parses command line arguments and runs
   operations."
   [& args]
-  (println args)
   (let [arguments (parse-opts args cli-options)
         options (:options arguments)
         summary (:summary arguments)
