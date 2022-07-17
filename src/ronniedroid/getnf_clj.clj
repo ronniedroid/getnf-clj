@@ -1,4 +1,3 @@
-(set! *warn-on-reflection* true)
 (ns ronniedroid.getnf-clj
   (:gen-class)
   (:require
