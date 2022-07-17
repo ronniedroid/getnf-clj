@@ -25,13 +25,14 @@
                             "1.1.1"}},
    :extra-paths ["test"]}},
  :deps
- {cheshire/cheshire {:mvn/version "5.11.0"},
+ {babashka/fs {:mvn/version "0.1.6"},
+  babashka/process {:mvn/version "0.1.2"},
+  cheshire/cheshire {:mvn/version "5.11.0"},
   clj-file-zip/clj-file-zip {:mvn/version
                              "0.1.0"},
   clj-fuzzy/clj-fuzzy {:mvn/version "0.4.1"},
-  clj-http/clj-http {:mvn/version "3.12.3"},
   org.clojure/clojure {:mvn/version
-                       "1.10.3"},
+                       "1.11.1"},
   org.clojure/tools.cli {:mvn/version
                          "1.0.206"}},
  :paths ["src" "resources"]}

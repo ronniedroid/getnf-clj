@@ -3,10 +3,10 @@
   (:gen-class)
   (:require
    [cheshire.core :as chesh]
-   [clj-file-zip.core :as cfz]
    [clj-fuzzy.metrics :as fm]
-   [clj-http.client :as client]
    [clojure.java.io :as io]
+   [babashka.fs :as fs]
+   [babashka.process :refer [process]]
    [clojure.tools.cli :refer [parse-opts]]
    [ronniedroid.nerd-fonts-list :refer
     [nerd-fonts nerd-fonts-names]]))
@@ -31,21 +31,18 @@
 (defn xdg-data-dir
   "Creates and points to the download location for the NerdFonts"
   [dir]
-  (let [distination (str (System/getenv
-                          "HOME")
-                         "/.local/share/"
-                         dir)]
-    (if (.exists (io/as-file distination))
+  (let [distination
+        (str (fs/home) "/.local/share/" dir)]
+    (if (fs/exists? distination)
       (str distination)
-      (do (.mkdir (io/file distination))
+      (do (fs/create-dir distination)
           (str distination)))))
 
 (defn get-release
   "gets NerdFonts release version"
   []
-  (-> (client/get (str nerd-fonts-repo
-                       "releases/latest"))
-      (:body)
+  (-> (slurp (str nerd-fonts-repo
+                  "releases/latest"))
       (chesh/decode)
       (get "name")))
 
@@ -60,14 +57,13 @@
      font
      ".zip")))
 
-(defn font-exsists?
+(defn font-exists?
   "Checkes if the fonts is already downloads"
   [font]
   (let [font-file (str font ".zip")]
-    (if-not (.exists
-             (io/as-file (str (xdg-data-dir
-                               "NerdFonts/")
-                              font-file)))
+    (if-not (fs/exists? (str (xdg-data-dir
+                              "NerdFonts/")
+                             font-file))
       false
       true)))
 
@@ -95,12 +91,14 @@
                 (xdg-data-dir "NerdFonts"))))
 
 (defn install
-  "Extracts the font to the apprpriate directory"
+  "Extracts the font to the appropriate
+  directory"
   [font]
-  (cfz/unzip (str (xdg-data-dir "NerdFonts/")
-                  font
-                  ".zip")
-             (xdg-data-dir "fonts/"))
+  (fs/unzip (str (xdg-data-dir "NerdFonts/")
+                 font
+                 ".zip")
+            (xdg-data-dir "fonts/")
+            {:replace-existing true})
   (println (str "'" font
                 "' has been installed in "
                 (xdg-data-dir "fonts"))))
@@ -110,7 +108,7 @@
   downloaded, if not, it will download it"
   [font]
   (if (in? nerd-fonts-names font)
-    (if-not (font-exsists? font)
+    (if-not (font-exists? font)
       (download font)
       (println
        (str font " is already downloaded")))
@@ -121,15 +119,18 @@
                  "'")))))
 
 (defn install-font
-  "Checkqs if the font is a nerd font and if it has already been
-  downloaded, if not, it will download it"
+  "Checkqs if the font is a nerd font and
+  if it has already been
+  downloaded, if not, it will download
+  it"
   [font]
   (if (in? nerd-fonts-names font)
-    (if-not (font-exsists? font)
+    (if-not (font-exists? font)
       (println
        (str
         font
-        " is not downloaded yet, download it first with -d flag."))
+        " is not downloaded yet, download
+        it first with -d flag."))
       (install font))
     (println
      (str "Did you mean '"
@@ -138,17 +139,20 @@
                  "'")))))
 
 (defn download-and-install-font
-  "Checkqs if the font is a nerd font and if it has already been
-  downloaded, if not, it will download it"
+  "Checkqs if the font is a nerd font and
+  if it has already been
+  downloaded, if not, it will download
+  it"
   [font]
   (if (in? nerd-fonts-names font)
-    (if-not (font-exsists? font)
+    (if-not (font-exists? font)
       (do (download font) (install font))
       (do
         (println
          (str
           font
-          " is already downloaded, installing now"))
+          " is already downloaded,
+          installing now"))
         (install font)))
     (println
      (str "Did you mean '"
@@ -162,12 +166,16 @@
   (run! #(download-font %) args))
 
 (defn install-multiple-fonts
-  "will download and install as many fonts as you provide it"
+  "will download and install as many
+  fonts
+  as you provide it"
   [args]
   (run! #(install-font %) args))
 
 (defn download-and-install-multiple-fonts
-  "will download and install as many fonts as you provide it"
+  "will download and install as many
+  fonts
+  as you provide it"
   [args]
   (run! #(download-and-install-font %) args))
 
@@ -181,16 +189,22 @@
     (xdg-data-dir "NerdFonts"))))
 
 (defn download-and-install-all-fonts
-  "Will download and install all the nerd fonts"
+  "Will download and install all the nerd
+  fonts"
   []
   (run! #(download-and-install-font %)
         nerd-fonts-names)
   (println
    (str
-    "All the NerdFonts were downloaded to "
+    "All the NerdFonts were downloaded to
+    "
     (xdg-data-dir "NerdFonts")
-    " and installed to " (xdg-data-dir
-                          "fonts"))))
+    " and installed to "
+    (xdg-data-dir "fonts"))))
+
+(defn update-font-cache
+  []
+  (process '[fc-cache -f]))
 
 (def cli-options
   ;; An option with a required argument
@@ -215,17 +229,25 @@
               download-install-all list]}
             options]
         (if (and download install)
-          (download-and-install-multiple-fonts
-           fonts)
+          (do
+            (download-and-install-multiple-fonts
+             fonts)
+            (update-font-cache))
           (cond
             download (download-multiple-fonts
                       fonts)
-            install (install-multiple-fonts
-                     fonts)
+            install (do
+                      (install-multiple-fonts
+                       fonts)
+                      (update-font-cache))
             download-all (download-all-fonts)
             download-install-all
-            (download-and-install-all-fonts)
+            (do
+              (download-and-install-all-fonts)
+              (update-font-cache))
             list (list-fonts)
             :else
-            (download-and-install-multiple-fonts
-             fonts)))))))
+            (do
+              (download-and-install-multiple-fonts
+               (update-font-cache))
+              fonts)))))))
