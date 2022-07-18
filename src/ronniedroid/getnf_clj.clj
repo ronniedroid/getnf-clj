@@ -52,7 +52,7 @@
             (download-and-install-all-fonts)
             list (list-fonts)
             :else
-            (if (> (.length fonts) 0)
+            (if (empty? fonts)
+              (help-message summary)
               (download-and-install-multiple-fonts
-               fonts)
-              (help-message summary))))))))
+               fonts))))))))
