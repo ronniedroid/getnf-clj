@@ -1,5 +1,7 @@
-(set! *warn-on-reflection* true)
-(ns ronniedroid.nerd-fonts-list)
+(ns ronniedroid.nerd-fonts)
+
+(def nerd-fonts-repo
+  "https://api.github.com/repos/ryanoasis/nerd-fonts/")
 
 (def nerd-fonts
   [{:name "3270", :real-name "3270"}
