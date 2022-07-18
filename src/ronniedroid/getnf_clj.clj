@@ -16,6 +16,14 @@
    ["-a" "--download-install-all"]
    ["-l" "--list"] ["-h" "--help"]])
 
+(defn help-message
+  [summary]
+  (println
+   (str
+    "Usage: getnf [options] args\n" "\n"
+    "the following options are available: \n"
+    summary)))
+
 (defn -main
   "parses command line arguments and runs
   operations."
@@ -26,7 +34,7 @@
         summary (:summary arguments)
         fonts (:arguments arguments)]
     (if (:help options)
-      (println summary)
+      (help-message summary)
       (let [{:keys
              [download install download-all
               download-install-all list]}
@@ -44,5 +52,7 @@
             (download-and-install-all-fonts)
             list (list-fonts)
             :else
-            (download-and-install-multiple-fonts
-             fonts)))))))
+            (if (> (.length fonts) 0)
+              (download-and-install-multiple-fonts
+               fonts)
+              (help-message summary))))))))
