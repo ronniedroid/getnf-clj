@@ -11,6 +11,10 @@
              [nerd-fonts nerd-fonts-names
               nerd-fonts-repo]]))
 
+(defn update-font-cache
+  []
+  (process '[fc-cache -f]))
+
 (defn get-release
   "gets NerdFonts release version"
   []
@@ -76,7 +80,8 @@
       (println
        (str font " is already downloaded")))
     (println
-     (str "Did you mean '"
+     (str "by " font
+          ", Did you mean '"
           (:name (fuzzy-search nerd-fonts
                                font)
                  "'")))))
@@ -96,16 +101,15 @@
         it first with -d flag."))
       (install font))
     (println
-     (str "Did you mean '"
+     (str "by " font
+          ", Did you mean '"
           (:name (fuzzy-search nerd-fonts
                                font)
                  "'")))))
 
 (defn download-and-install-font
-  "Checkqs if the font is a nerd font and
-  if it has already been
-  downloaded, if not, it will download
-  it"
+  "Checks if the font is a nerd font and if it has already been
+  downloaded, if not, it will download it"
   [font]
   (if (in? nerd-fonts-names font)
     (if-not (font-exists? font)
@@ -118,27 +122,24 @@
           installing now"))
         (install font)))
     (println
-     (str "Did you mean '"
+     (str "by " font
+          ", Did you mean '"
           (:name (fuzzy-search nerd-fonts
                                font)
                  "'")))))
 
 (defn download-multiple-fonts
-  "will download and install as many fonts as you provide it"
+  "will download as many fonts as you provide it"
   [args]
   (run! #(download-font %) args))
 
 (defn install-multiple-fonts
-  "will download and install as many
-  fonts
-  as you provide it"
+  "will install as many fonts as you provide it"
   [args]
   (run! #(install-font %) args))
 
 (defn download-and-install-multiple-fonts
-  "will download and install as many
-  fonts
-  as you provide it"
+  "will download and install as many fonts as you provide it"
   [args]
   (run! #(download-and-install-font %) args))
 
@@ -164,7 +165,3 @@
     (xdg-data-dir "NerdFonts")
     " and installed to "
     (xdg-data-dir "fonts"))))
-
-(defn update-font-cache
-  []
-  (process '[fc-cache -f]))

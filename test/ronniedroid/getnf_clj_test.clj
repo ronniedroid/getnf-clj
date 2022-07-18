@@ -1,7 +1,18 @@
 (ns ronniedroid.getnf-clj-test
   (:require [clojure.test :refer :all]
-            [ronniedroid.getnf-clj :refer :all]))
+            [ronniedroid.handle-fonts :refer
+             :all]
+            [ronniedroid.utils :refer :all]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(deftest is-in?
+  (testing
+   "testing the in? function from utils"
+   (is (= (in? [1 2 3] 1) true))))
+
+(deftest is-fuzzy-search?
+  (testing
+   "testing the fuzzy-search function from utils"
+   (is (= (fuzzy-search ["FiraCode" "Nato"
+                         "Reboto"]
+                        "code")
+          "FiraCode"))))

@@ -7,8 +7,7 @@
      download-and-install-all-fonts
      download-and-install-multiple-fonts
      download-multiple-fonts
-     install-multiple-fonts
-     update-font-cache]]))
+     install-multiple-fonts]]))
 
 (def cli-options
   ;; An option with a required argument
@@ -33,25 +32,17 @@
               download-install-all list]}
             options]
         (if (and download install)
-          (do
-            (download-and-install-multiple-fonts
-             fonts)
-            (update-font-cache))
+          (download-and-install-multiple-fonts
+           fonts)
           (cond
             download (download-multiple-fonts
                       fonts)
-            install (do
-                      (install-multiple-fonts
-                       fonts)
-                      (update-font-cache))
+            install (install-multiple-fonts
+                     fonts)
             download-all (download-all-fonts)
             download-install-all
-            (do
-              (download-and-install-all-fonts)
-              (update-font-cache))
+            (download-and-install-all-fonts)
             list (list-fonts)
             :else
-            (do
-              (download-and-install-multiple-fonts
-               fonts)
-              (update-font-cache))))))))
+            (download-and-install-multiple-fonts
+             fonts)))))))
