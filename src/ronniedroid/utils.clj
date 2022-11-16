@@ -8,6 +8,9 @@
   (->> coll
        (some #(= elm %))))
 
+(in? [:kyle "is cool" :shado "sucks"]
+     :ronnie)
+
 (defn fuzzy-search
   "Does a fuzzy search and returns the best match"
   [coll font]
